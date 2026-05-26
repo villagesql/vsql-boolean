@@ -82,7 +82,8 @@ aggregate support at https://github.com/villagesql/villagesql-server/issues.
 **Uninstalling requires no dependent columns.** `UNINSTALL EXTENSION
 vsql_boolean` fails if any table has a `STRICTBOOL` column. Drop or alter
 those columns first, then uninstall, then reinstall. There is no
-`ALTER EXTENSION` command.
+`ALTER EXTENSION` command. Track upgrade support at
+https://github.com/villagesql/villagesql-server/issues/12.
 
 ## Testing
 
