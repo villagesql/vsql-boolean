@@ -1,0 +1,70 @@
+INSTALL EXTENSION vsql_boolean;
+
+--echo #
+--echo # String input: standard true/false values
+--echo #
+
+CREATE TABLE t_bool (id INT, flag STRICTBOOL);
+INSERT INTO t_bool VALUES (1, 'true'), (2, 'false');
+SELECT id, flag FROM t_bool ORDER BY id;
+DROP TABLE t_bool;
+
+--echo #
+--echo # String input: integer aliases 1 and 0
+--echo #
+
+CREATE TABLE t_bool (id INT, flag STRICTBOOL);
+INSERT INTO t_bool VALUES (1, '1'), (2, '0');
+SELECT id, flag FROM t_bool ORDER BY id;
+DROP TABLE t_bool;
+
+--echo #
+--echo # String input: common aliases (t/f, yes/no, on/off)
+--echo #
+
+CREATE TABLE t_bool (flag STRICTBOOL);
+INSERT INTO t_bool VALUES ('t'), ('f'), ('yes'), ('no'), ('on'), ('off');
+SELECT flag FROM t_bool ORDER BY flag;
+DROP TABLE t_bool;
+
+--echo #
+--echo # NULL handling
+--echo #
+
+CREATE TABLE t_bool (flag STRICTBOOL);
+INSERT INTO t_bool VALUES (NULL);
+SELECT flag IS NULL AS is_null FROM t_bool;
+DROP TABLE t_bool;
+
+--echo #
+--echo # Filtering: WHERE flag = TRUE / FALSE
+--echo #
+
+CREATE TABLE t_bool (id INT, flag STRICTBOOL);
+INSERT INTO t_bool VALUES (1, 'true'), (2, 'false'), (3, 'yes'), (4, 'no');
+SELECT id FROM t_bool WHERE flag = 'true' ORDER BY id;
+SELECT id FROM t_bool WHERE flag = 'false' ORDER BY id;
+DROP TABLE t_bool;
+
+--echo #
+--echo # SHOW CREATE TABLE shows STRICTBOOL type
+--echo #
+
+CREATE TABLE t_bool (flag STRICTBOOL);
+SHOW CREATE TABLE t_bool;
+DROP TABLE t_bool;
+
+--echo #
+--echo # ORDER BY: false before true
+--echo #
+
+CREATE TABLE t_bool (id INT, flag STRICTBOOL);
+INSERT INTO t_bool VALUES (1, 'true'), (2, 'false'), (3, 'true'), (4, 'false');
+SELECT id, flag FROM t_bool ORDER BY flag ASC, id ASC;
+DROP TABLE t_bool;
+
+--echo #
+--echo # Cleanup
+--echo #
+
+UNINSTALL EXTENSION vsql_boolean;

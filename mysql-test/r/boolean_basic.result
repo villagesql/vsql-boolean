@@ -1,0 +1,84 @@
+INSTALL EXTENSION vsql_boolean;
+#
+# String input: standard true/false values
+#
+CREATE TABLE t_bool (id INT, flag STRICTBOOL);
+INSERT INTO t_bool VALUES (1, 'true'), (2, 'false');
+SELECT id, flag FROM t_bool ORDER BY id;
+id	flag
+1	true
+2	false
+DROP TABLE t_bool;
+#
+# String input: integer aliases 1 and 0
+#
+CREATE TABLE t_bool (id INT, flag STRICTBOOL);
+INSERT INTO t_bool VALUES (1, '1'), (2, '0');
+SELECT id, flag FROM t_bool ORDER BY id;
+id	flag
+1	true
+2	false
+DROP TABLE t_bool;
+#
+# String input: common aliases (t/f, yes/no, on/off)
+#
+CREATE TABLE t_bool (flag STRICTBOOL);
+INSERT INTO t_bool VALUES ('t'), ('f'), ('yes'), ('no'), ('on'), ('off');
+SELECT flag FROM t_bool ORDER BY flag;
+flag
+false
+false
+false
+true
+true
+true
+DROP TABLE t_bool;
+#
+# NULL handling
+#
+CREATE TABLE t_bool (flag STRICTBOOL);
+INSERT INTO t_bool VALUES (NULL);
+SELECT flag IS NULL AS is_null FROM t_bool;
+is_null
+1
+DROP TABLE t_bool;
+#
+# Filtering: WHERE flag = TRUE / FALSE
+#
+CREATE TABLE t_bool (id INT, flag STRICTBOOL);
+INSERT INTO t_bool VALUES (1, 'true'), (2, 'false'), (3, 'yes'), (4, 'no');
+SELECT id FROM t_bool WHERE flag = 'true' ORDER BY id;
+id
+1
+3
+SELECT id FROM t_bool WHERE flag = 'false' ORDER BY id;
+id
+2
+4
+DROP TABLE t_bool;
+#
+# SHOW CREATE TABLE shows STRICTBOOL type
+#
+CREATE TABLE t_bool (flag STRICTBOOL);
+SHOW CREATE TABLE t_bool;
+Table	Create Table
+t_bool	CREATE TABLE `t_bool` (
+  `flag` vsql_boolean.STRICTBOOL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+DROP TABLE t_bool;
+#
+# ORDER BY: false before true
+#
+CREATE TABLE t_bool (id INT, flag STRICTBOOL);
+INSERT INTO t_bool VALUES (1, 'true'), (2, 'false'), (3, 'true'), (4, 'false');
+SELECT id, flag FROM t_bool ORDER BY flag ASC, id ASC;
+id	flag
+2	false
+4	false
+1	true
+3	true
+DROP TABLE t_bool;
+#
+# Cleanup
+#
+UNINSTALL EXTENSION vsql_boolean;

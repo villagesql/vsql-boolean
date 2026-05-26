@@ -1,282 +1,102 @@
-# VillageSQL Extension Template
+# VillageSQL Boolean Extension
 
-A minimal template project for creating VillageSQL extensions. This template provides the essential structure and files needed to develop, build, and test custom VillageSQL extensions.
+A real `BOOLEAN` type for VillageSQL. Replaces `BOOL`/`BOOLEAN` aliases for
+`TINYINT(1)` with a proper boolean type — clear metadata, standard truth
+values, and correct dump/restore semantics.
 
-## What This Is
+## Building
 
-This template demonstrates how to create a VillageSQL extension by implementing a simple "Hello, World!" function. It includes all the minimum required files and follows the VillageSQL extension framework (VEF) structure.
-
-## Project Structure
-
-```
-vsql_extension_template/
-├── manifest.json           # Extension metadata (name, version, description, etc.)
-├── CMakeLists.txt         # CMake build configuration
-├── cmake/
-│   └── FindVillageSQL.cmake  # CMake module for finding VillageSQL
-├── src/
-│   └── hello.cc           # C++ implementation using VEF API
-└── mysql-test/
-    ├── t/                 # Test files (.test)
-    │   └── hello_basic.test
-    └── r/                 # Expected results (.result)
-        └── hello_basic.result
+**Linux:**
+```bash
+mkdir -p build
+cmake -S . -B build -DVillageSQL_BUILD_DIR=$HOME/build/villagesql
+cmake --build build
+cmake --install build
 ```
 
-## Prerequisites
+**macOS:**
+```bash
+mkdir -p build
+cmake -S . -B build -DVillageSQL_BUILD_DIR=~/.villagesql/build
+cmake --build build
+cmake --install build
+```
 
-- VillageSQL build directory (with completed build)
-- CMake 3.16 or higher
-- C++ compiler with C++17 support
-- OpenSSL development libraries
-
-📚 **Full Documentation**: Visit [villagesql.com/docs](https://villagesql.com/docs) for comprehensive guides on building extensions, architecture details, and more.
-
-## Building the Extension
-
-1. Create a build directory and configure:
-
-   **Linux:**
-   ```bash
-   mkdir build
-   cd build
-   cmake .. -DVillageSQL_BUILD_DIR=$HOME/build/villagesql
-   ```
-
-   **macOS:**
-   ```bash
-   mkdir build
-   cd build
-   cmake .. -DVillageSQL_BUILD_DIR=~/build/villagesql
-   ```
-
-   **Note**: `VillageSQL_BUILD_DIR` should point to your VillageSQL build directory. The VEB install directory is automatically set to `${VillageSQL_BUILD_DIR}/veb_output_directory`.
-
-2. Build the extension:
-
-   ```bash
-   make -j $(($(getconf _NPROCESSORS_ONLN) - 2))
-   ```
-
-   This creates the `vsql_extension_template.veb` package in the build directory.
-
-3. Install the VEB (optional):
+Or use the convenience script:
 
 ```bash
-make install
+VillageSQL_BUILD_DIR=/path/to/villagesql/build bash build.sh
 ```
 
-This copies the VEB to the directory specified by `VillageSQL_VEB_INSTALL_DIR`. If not using `make install`, you can manually copy the VEB file to your desired location.
-
-## Using the Extension
-
-After building the VEB file, load the extension in VillageSQL:
+## Installing
 
 ```sql
-INSTALL EXTENSION vsql_extension_template;
+INSTALL EXTENSION 'vsql_boolean';
 ```
 
-Then test the function:
+## Quick Start
 
 ```sql
-SELECT hello_world();
--- Returns: Hello, World!
+CREATE TABLE settings (id INT, enabled STRICTBOOL);
+INSERT INTO settings VALUES (1, 'true'), (2, 'false'), (3, 'yes'), (4, '0');
+SELECT * FROM settings WHERE enabled = 'true';
+SHOW CREATE TABLE settings;
 ```
 
-Note: Extension names use underscores, not hyphens (e.g., `vsql_extension_template`).
+## Function Reference
+
+### STRICTBOOL type
+
+Storage: 1 byte on disk (`0x00` = FALSE, `0x01` = TRUE).
+
+**Accepted input** (case-insensitive):
+
+| Input | Stored as |
+|---|---|
+| `'true'`, `'t'`, `'yes'`, `'on'`, `'1'` | TRUE |
+| `'false'`, `'f'`, `'no'`, `'off'`, `'0'` | FALSE |
+| `NULL` | NULL |
+
+**Output**: `'true'` or `'false'` (lowercase).
+
+**Ordering**: `FALSE` sorts before `TRUE`; NULLs first with `ASC`.
+
+**NULL handling**: NULL inputs are preserved as NULL. For `NOT NULL` columns
+receiving NULL with IGNORE, the intrinsic default is `'false'`.
+
+## Known Limitations
+
+**Type is named `STRICTBOOL`, not `BOOLEAN`.** MySQL's parser translates
+`BOOLEAN` and `BOOL` to `TINYINT(1)` at the grammar level before VEF type
+resolution runs. A column declared as `BOOLEAN` creates a `tinyint(1)` column
+even with this extension installed. The VEF type is therefore named
+`STRICTBOOL`. When VillageSQL adds support for VEF types to override built-in
+type aliases, a rename will be possible without changing the binary storage
+format. Track this at https://github.com/villagesql/villagesql-server/issues.
+
+**`SUM()` and `AVG()` are not supported on `STRICTBOOL` columns.** These
+aggregates require numeric promotion that the current VEF API does not expose
+for custom types. `COUNT(*)`, `MIN()`, and `MAX()` work correctly. Track
+aggregate support at https://github.com/villagesql/villagesql-server/issues.
+
+**Uninstalling requires no dependent columns.** `UNINSTALL EXTENSION
+vsql_boolean` fails if any table has a `STRICTBOOL` column. Drop or alter
+those columns first, then uninstall, then reinstall. There is no
+`ALTER EXTENSION` command.
 
 ## Testing
 
-The extension includes test files using the MySQL Test Runner (MTR) framework.
+See `TESTING.md`.
 
-### Running Tests
+## Reporting Bugs and Requesting Features
 
-**Option 1 (Default): Using installed VEB**
+Open an issue at https://github.com/villagesql/villagesql-server/issues
 
-This method assumes you have successfully run `make install` to install the VEB to your veb_dir.
+## Contact
 
-**Linux:**
-```bash
-cd $HOME/build/villagesql/mysql-test
-perl mysql-test-run.pl --suite=/path/to/vsql-extension-template/mysql-test
-
-# Run with specific options
-perl mysql-test-run.pl --suite=/path/to/vsql-extension-template/mysql-test --parallel=auto
-```
-
-**macOS:**
-```bash
-cd ~/build/villagesql/mysql-test
-perl mysql-test-run.pl --suite=/path/to/vsql-extension-template/mysql-test
-
-# Run with specific options
-perl mysql-test-run.pl --suite=/path/to/vsql-extension-template/mysql-test --parallel=auto
-```
-
-**Option 2: Using a specific VEB file**
-
-Use this to test a specific VEB build without installing it first:
-
-**Linux:**
-```bash
-cd $HOME/build/villagesql/mysql-test
-VSQL_EXTENSION_TEMPLATE_VEB=/path/to/build/vsql_extension_template.veb \
-  perl mysql-test-run.pl --suite=/path/to/vsql-extension-template/mysql-test
-```
-
-**macOS:**
-```bash
-cd ~/build/villagesql/mysql-test
-VSQL_EXTENSION_TEMPLATE_VEB=/path/to/build/vsql_extension_template.veb \
-  perl mysql-test-run.pl --suite=/path/to/vsql-extension-template/mysql-test
-```
-
-### Creating/Updating Test Results
-
-To create or update expected test results:
-
-**Linux:**
-```bash
-cd $HOME/build/villagesql/mysql-test
-perl mysql-test-run.pl --suite=/path/to/test --record
-```
-
-**macOS:**
-```bash
-cd ~/build/villagesql/mysql-test
-perl mysql-test-run.pl --suite=/path/to/test --record
-```
-
-## Customizing This Template
-
-To create your own extension:
-
-1. **Update `manifest.json`**:
-   - Change `name` to your extension name (use underscores, e.g., `my_extension_name`)
-   - Update `description`, `author`, and other metadata
-
-2. **Update `CMakeLists.txt`**:
-   - Change `EXTENSION_NAME` to match your extension (use underscores)
-   - Update the library name and source files in `add_library()`
-   - Add dependencies if needed (e.g., `find_package()`, `target_link_libraries()`)
-
-3. **Implement Your Functions**:
-   - Modify `src/hello.cc` or create new source files
-   - Include `<villagesql/vsql.h>` and `using namespace vsql;`
-   - Use typed wrapper parameters: `IntArg`, `RealArg`, `StringArg`, `StringResult`, etc.
-   - Register functions using `VEF_GENERATE_ENTRY_POINTS()` macro
-
-4. **Create Tests**:
-   - Add `.test` files in the `mysql-test/t/` directory
-   - Generate expected results with `--record` flag
-   - Verify your functions work correctly
-
-## Extension Development Tips
-
-- **Extension Naming**: Always use underscores in extension names, not hyphens
-- **Return Types**: Common types are `STRING`, `INT`, `REAL`, or custom types
-- **String Results**: Write into `out.buffer()`, then call `out.set_length(n)`
-- **NULL Handling**: Call `arg.is_null()` on input args; call `out.set_null()` to return NULL
-- **Error Handling**: Call `out.error(msg)` to abort with an error; `out.warning(msg)` for a warning
-- **Testing**: Always test with various inputs including edge cases and NULL values
-
-## Example: Adding a New Function
-
-1. Add implementation to `src/hello.cc`:
-
-```cpp
-void greet_impl(StringArg name, StringResult out) {
-    if (name.is_null()) { out.set_null(); return; }
-    auto val = name.value();
-    auto buf = out.buffer();
-    auto len = snprintf(buf.data(), buf.size(), "Hello, %.*s!",
-                        (int)val.size(), val.data());
-    out.set_length(len);
-}
-```
-
-2. Register in `VEF_GENERATE_ENTRY_POINTS()`:
-
-```cpp
-VEF_GENERATE_ENTRY_POINTS(
-  make_extension()
-    .func(make_func<&hello_world_impl>("hello_world")
-      .returns(STRING)
-      .no_params()
-      .buffer_size(14)
-      .build())
-    .func(make_func<&greet_impl>("greet")
-      .returns(STRING)
-      .param(STRING)
-      .buffer_size(256)
-      .build())
-)
-```
-
-3. Rebuild and test:
-
-   ```bash
-   cd build
-   make -j $(($(getconf _NPROCESSORS_ONLN) - 2))
-   make install  # If VillageSQL_VEB_INSTALL_DIR is configured
-   ```
-
-   Then in VillageSQL:
-
-   ```sql
-   INSTALL EXTENSION vsql_extension_template;
-
-   -- Call without prefix
-   SELECT greet('VillageSQL');
-
-   -- Or with explicit namespace
-   SELECT vsql_extension_template.greet('VillageSQL');
-   ```
-
-## Troubleshooting
-
-### Build Failures
-
-**VillageSQL SDK not found:**
-```bash
-# Make sure VillageSQL_BUILD_DIR points to your build directory
-# Linux:
-cmake .. -DVillageSQL_BUILD_DIR=$HOME/build/villagesql
-
-# macOS:
-cmake .. -DVillageSQL_BUILD_DIR=~/build/villagesql
-```
-
-**OpenSSL not found:**
-```bash
-# macOS with Homebrew
-brew install openssl@3
-cmake .. -DVillageSQL_BUILD_DIR=~/build/villagesql -DWITH_SSL=/opt/homebrew/opt/openssl@3
-```
-
-### Extension Loading Issues
-
-**Extension not found after installation:**
-- Verify the VEB file was copied to the correct directory
-- Check that `INSTALL EXTENSION extension_name` uses the correct name (underscores, not hyphens)
-- Restart the VillageSQL server if needed
-
-**Function not found:**
-- Ensure the extension is installed: `SELECT * FROM INFORMATION_SCHEMA.EXTENSIONS;`
-- Try using explicit namespace: `extension_name.function_name()`
-- Check the server's VEF protocol support level to confirm compatibility with
-  your extension: `SELECT @@villagesql_vef_server_protocol;`
-
-## Resources
-
-- [VillageSQL Documentation](https://villagesql.com/docs)
-- [VillageSQL Extension Framework (VEF) Guide](https://villagesql.com/docs)
-- [CMake Documentation](https://cmake.org/documentation/)
+- Discord: https://discord.gg/KSr6whd3Fr
+- GitHub Issues: https://github.com/villagesql/villagesql-server/issues
 
 ## License
 
-This template is released under the GPL-2.0 license. See the license header in source files for details.
-
-## Contributing
-
-When creating extensions based on this template, ensure your code follows the same license and includes appropriate copyright notices.
+GPL-2.0. See source files for the full license header.

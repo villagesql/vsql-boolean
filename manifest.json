@@ -1,7 +1,7 @@
 {
-  "name": "vsql_extension_template",
-  "version": "1.0.0",
-  "description": "Template project for creating VillageSQL extensions",
-  "author": "Your Name",
+  "name": "vsql_boolean",
+  "version": "0.0.1",
+  "description": "Real BOOLEAN type for VillageSQL with standard truth values and clear metadata",
+  "author": "VillageSQL Contributors",
   "license": "GPL-2.0"
 }
