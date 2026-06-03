@@ -72,7 +72,7 @@ resolution runs. A column declared as `BOOLEAN` creates a `tinyint(1)` column
 even with this extension installed. The VEF type is therefore named
 `STRICTBOOL`. When VillageSQL adds support for VEF types to override built-in
 type aliases, a rename will be possible without changing the binary storage
-format. Track this at https://github.com/villagesql/villagesql-server/issues.
+format. Track this at https://github.com/villagesql/villagesql-server/issues/604.
 
 **`SUM()` and `AVG()` are not supported on `STRICTBOOL` columns.** These
 aggregates require numeric promotion that the current VEF API does not expose
