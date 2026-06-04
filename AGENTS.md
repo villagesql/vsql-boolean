@@ -11,7 +11,7 @@ vsql-boolean adds a real `BOOLEAN` custom type to VillageSQL. It replaces the
 clear metadata, standard truth values, and correct dump/restore semantics.
 
 Install name: `vsql_boolean`
-SQL type: `BOOLEAN`
+SQL type: `STRICTBOOL`
 Storage: 1 byte — `0x00` = FALSE, `0x01` = TRUE
 
 ## Build System
@@ -36,7 +36,7 @@ The build produces `vsql_boolean.veb` and installs it to the VEB directory.
 ## Architecture
 
 **Core Components:**
-- `src/vsql_boolean.cc` — BOOLEAN type: encode, decode, compare, hash + registration
+- `src/vsql_boolean.cc` — STRICTBOOL type: encode, decode, compare, hash + registration
 - `manifest.json` — Extension metadata
 - `CMakeLists.txt` — CMake build configuration
 - `cmake/FindVillageSQL.cmake` — CMake module for finding VillageSQL SDK
@@ -44,10 +44,10 @@ The build produces `vsql_boolean.veb` and installs it to the VEB directory.
 - `mysql-test/r/` — MTR expected results (`.result`)
 
 **Type Operations:**
-- `BOOLEAN::from_string` — parses string literals into 1-byte binary (case-insensitive: true/false/t/f/yes/no/on/off/1/0)
-- `BOOLEAN::to_string` — converts binary to "true" or "false"
-- `BOOLEAN::compare` — returns -1/0/1 (FALSE < TRUE)
-- `BOOLEAN::hash` — returns 0 for FALSE, 1 for TRUE
+- `STRICTBOOL::from_string` — parses string literals into 1-byte binary (case-insensitive: true/false/t/f/yes/no/on/off/1/0)
+- `STRICTBOOL::to_string` — converts binary to "true" or "false"
+- `STRICTBOOL::compare` — returns -1/0/1 (FALSE < TRUE)
+- `STRICTBOOL::hash` — returns 0 for FALSE, 1 for TRUE
 
 **Dependencies:**
 - VillageSQL Extension Framework (VEF) — typed C++ API via `<villagesql/vsql.h>`
@@ -62,9 +62,9 @@ INSTALL EXTENSION 'vsql_boolean';
 Then use it:
 
 ```sql
-CREATE TABLE t (id INT, active BOOLEAN);
+CREATE TABLE t (id INT, active STRICTBOOL);
 INSERT INTO t VALUES (1, 'true'), (2, 'false'), (3, 'yes'), (4, '0');
-SELECT * FROM t WHERE active = TRUE;
+SELECT * FROM t WHERE active = 'true';
 SHOW CREATE TABLE t;
 ```
 

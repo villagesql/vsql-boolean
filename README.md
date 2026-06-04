@@ -77,7 +77,13 @@ format. Track this at https://github.com/villagesql/villagesql-server/issues/604
 **`SUM()` and `AVG()` are not supported on `STRICTBOOL` columns.** These
 aggregates require numeric promotion that the current VEF API does not expose
 for custom types. `COUNT(*)`, `MIN()`, and `MAX()` work correctly. Track
-aggregate support at https://github.com/villagesql/villagesql-server/issues.
+aggregate support at https://github.com/villagesql/villagesql-server/issues/605.
+
+**Extension-defined index types are not supported in the stable VEF API.**
+Custom STRICTBOOL columns participate in standard MySQL B-tree indexes via the
+compare function. Bitmap indexes or other index types optimized for boolean
+columns require the index type registration API. Track at
+https://github.com/villagesql/villagesql-server/issues/264.
 
 **Uninstalling requires no dependent columns.** `UNINSTALL EXTENSION
 vsql_boolean` fails if any table has a `STRICTBOOL` column. Drop or alter
@@ -88,6 +94,10 @@ https://github.com/villagesql/villagesql-server/issues/12.
 ## Testing
 
 See `TESTING.md`.
+
+## Contributing
+
+See the [VillageSQL Contributing Guide](https://github.com/villagesql/villagesql-server/blob/main/CONTRIBUTING.md).
 
 ## Reporting Bugs and Requesting Features
 
