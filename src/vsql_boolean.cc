@@ -26,7 +26,11 @@
 
 using vsql::CustomArg;
 using vsql::CustomResult;
+using vsql::IntResult;
+using vsql::RealResult;
 using vsql::StringResult;
+using vsql::INT;
+using vsql::REAL;
 
 namespace {
 
@@ -91,6 +95,53 @@ size_t boolean_hash(CustomArg in) try {
   return 0;
 }
 
+// =============================================================================
+// Aggregate VDFs
+// =============================================================================
+
+// boolean_sum(STRICTBOOL) -> INT: count of TRUE values in the group.
+struct BoolSumState {
+  int64_t count = 0;
+};
+
+void boolean_sum_clear(BoolSumState &s) { s.count = 0; }
+
+void boolean_sum_accumulate(BoolSumState &s, CustomArg v) {
+  if (!v.is_null() && v.value()[0] == kTrue) ++s.count;
+}
+
+void boolean_sum_result(const BoolSumState &s, IntResult out) {
+  out.set(s.count);
+}
+
+// boolean_avg(STRICTBOOL) -> REAL: ratio of TRUE values (true_count / total).
+// Returns NULL when the group is empty.
+struct BoolAvgState {
+  int64_t true_count = 0;
+  int64_t total = 0;
+};
+
+void boolean_avg_clear(BoolAvgState &s) {
+  s.true_count = 0;
+  s.total = 0;
+}
+
+void boolean_avg_accumulate(BoolAvgState &s, CustomArg v) {
+  if (!v.is_null()) {
+    ++s.total;
+    if (v.value()[0] == kTrue) ++s.true_count;
+  }
+}
+
+void boolean_avg_result(const BoolAvgState &s, RealResult out) {
+  if (s.total == 0) { out.set_null(); return; }
+  out.set(static_cast<double>(s.true_count) / static_cast<double>(s.total));
+}
+
+// =============================================================================
+// Type
+// =============================================================================
+
 constexpr const char kBooleanTypeName[] = "STRICTBOOL";
 
 constexpr auto STRICTBOOL = vsql::make_type<kBooleanTypeName>()
@@ -106,4 +157,18 @@ constexpr auto STRICTBOOL = vsql::make_type<kBooleanTypeName>()
 VEF_GENERATE_ENTRY_POINTS(
   vsql::make_extension()
     .type(STRICTBOOL)
+    .func(vsql::make_aggregate_func<BoolSumState, &boolean_sum_result>(
+              "boolean_sum")
+              .returns(INT)
+              .param("STRICTBOOL")
+              .clear<&boolean_sum_clear>()
+              .accumulate<&boolean_sum_accumulate>()
+              .build())
+    .func(vsql::make_aggregate_func<BoolAvgState, &boolean_avg_result>(
+              "boolean_avg")
+              .returns(REAL)
+              .param("STRICTBOOL")
+              .clear<&boolean_avg_clear>()
+              .accumulate<&boolean_avg_accumulate>()
+              .build())
 )

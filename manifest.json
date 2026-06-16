@@ -1,6 +1,6 @@
 {
   "name": "vsql_boolean",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Real BOOLEAN type for VillageSQL with standard truth values and clear metadata",
   "author": "VillageSQL Contributors",
   "license": "GPL-2.0"
