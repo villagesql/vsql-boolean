@@ -45,6 +45,19 @@ SHOW CREATE TABLE settings;
 
 ## Function Reference
 
+### Aggregate functions
+
+| Function | Returns | Description |
+|---|---|---|
+| `boolean_sum(col)` | `INT` | Count of `TRUE` values in the group. NULLs are skipped. |
+| `boolean_avg(col)` | `REAL` | Ratio of `TRUE` values (`true_count / total`). Returns `NULL` on an empty group. NULLs are skipped. |
+
+```sql
+SELECT boolean_sum(enabled), boolean_avg(enabled) FROM settings;
+-- boolean_sum(enabled): 2
+-- boolean_avg(enabled): 0.5
+```
+
 ### STRICTBOOL type
 
 Storage: 1 byte on disk (`0x00` = FALSE, `0x01` = TRUE).
@@ -74,10 +87,11 @@ even with this extension installed. The VEF type is therefore named
 type aliases, a rename will be possible without changing the binary storage
 format. Track this at https://github.com/villagesql/villagesql-server/issues/604.
 
-**`SUM()` and `AVG()` are not supported on `STRICTBOOL` columns.** These
-aggregates require numeric promotion that the current VEF API does not expose
-for custom types. `COUNT(*)`, `MIN()`, and `MAX()` work correctly. Track
-aggregate support at https://github.com/villagesql/villagesql-server/issues/605.
+**Built-in `SUM()` and `AVG()` are not supported on `STRICTBOOL` columns.**
+These aggregates require numeric promotion that the current VEF API does not
+expose for custom types. Use `boolean_sum()` and `boolean_avg()` instead (see
+above). `COUNT(*)`, `MIN()`, and `MAX()` work correctly. Track native aggregate
+support at https://github.com/villagesql/villagesql-server/issues/605.
 
 **Extension-defined index types are not supported in the stable VEF API.**
 Custom STRICTBOOL columns participate in standard MySQL B-tree indexes via the
