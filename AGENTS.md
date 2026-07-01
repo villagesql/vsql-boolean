@@ -56,7 +56,7 @@ The build produces `vsql_boolean.veb` and installs it to the VEB directory.
 ## Extension Installation
 
 ```sql
-INSTALL EXTENSION 'vsql_boolean';
+INSTALL EXTENSION vsql_boolean;
 ```
 
 Then use it:

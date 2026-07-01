@@ -31,7 +31,7 @@ VillageSQL_BUILD_DIR=/path/to/villagesql/build bash build.sh
 ## Installing
 
 ```sql
-INSTALL EXTENSION 'vsql_boolean';
+INSTALL EXTENSION vsql_boolean;
 ```
 
 ## Quick Start
