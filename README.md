@@ -4,6 +4,20 @@ A real `BOOLEAN` type for VillageSQL. Replaces `BOOL`/`BOOLEAN` aliases for
 `TINYINT(1)` with a proper boolean type — clear metadata, standard truth
 values, and correct dump/restore semantics.
 
+## Installation
+
+If you installed VillageSQL with the install script, the Docker image, or a
+release tarball, `vsql_boolean.veb` is already in the server's `lib/veb/`
+directory — this extension is bundled with the server. There is nothing to build
+or download:
+
+```sql
+INSTALL EXTENSION vsql_boolean;
+```
+
+Build from source only if you built the server from source without the bundled
+extensions, or if you are working on this extension itself.
+
 ## Building
 
 **Linux:**
@@ -17,7 +31,7 @@ cmake --install build
 **macOS:**
 ```bash
 mkdir -p build
-cmake -S . -B build -DVillageSQL_BUILD_DIR=~/.villagesql/build
+cmake -S . -B build -DVillageSQL_BUILD_DIR="$HOME/.villagesql/build"
 cmake --build build
 cmake --install build
 ```
@@ -70,6 +84,11 @@ Storage: 1 byte on disk (`0x00` = FALSE, `0x01` = TRUE).
 | `'false'`, `'f'`, `'no'`, `'off'`, `'0'` | FALSE |
 | `NULL` | NULL |
 
+Only the quoted string forms above are accepted. A bare numeric literal is
+rejected — `INSERT INTO settings VALUES (1, 1)` raises
+`ERROR 3219: Incorrect STRICTBOOL value: '1'` — unlike `TINYINT(1)`, which
+coerces it silently.
+
 **Output**: `'true'` or `'false'` (lowercase).
 
 **Ordering**: `FALSE` sorts before `TRUE`; NULLs first with `ASC`.
@@ -101,8 +120,10 @@ https://github.com/villagesql/villagesql-server/issues/264.
 
 **Uninstalling requires no dependent columns.** `UNINSTALL EXTENSION
 vsql_boolean` fails if any table has a `STRICTBOOL` column. Drop or alter
-those columns first, then uninstall, then reinstall. There is no
-`ALTER EXTENSION` command. Track upgrade support at
+those columns first, then uninstall, then reinstall. A version change can also
+be staged with `ALTER EXTENSION vsql_boolean VERSION '<v>' AT RESTART`, which
+takes effect at the next server restart rather than immediately. Track upgrade
+support at
 https://github.com/villagesql/villagesql-server/issues/12.
 
 ## Testing
