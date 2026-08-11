@@ -96,6 +96,21 @@ size_t boolean_hash(CustomArg in) try {
 }
 
 // =============================================================================
+// Scalar VDFs
+// =============================================================================
+
+// boolean_to_int(STRICTBOOL) -> INT: 1 for TRUE, 0 for FALSE, NULL for NULL.
+// Deterministic, so it is usable in generated columns and CHECK constraints,
+// and it lets the built-in numeric aggregates (SUM, AVG) run over a
+// STRICTBOOL column.
+void boolean_to_int(CustomArg in, IntResult out) try {
+  if (in.is_null()) { out.set_null(); return; }
+  out.set(in.value()[0] == kTrue ? 1 : 0);
+} catch (...) {
+  out.error("boolean_to_int: unexpected exception");
+}
+
+// =============================================================================
 // Aggregate VDFs
 // =============================================================================
 
@@ -157,6 +172,11 @@ constexpr auto STRICTBOOL = vsql::make_type<kBooleanTypeName>()
 VEF_GENERATE_ENTRY_POINTS(
   vsql::make_extension()
     .type(STRICTBOOL)
+    .func(vsql::make_func<&boolean_to_int>("boolean_to_int")
+              .returns(INT)
+              .param("STRICTBOOL")
+              .deterministic()
+              .build())
     .func(vsql::make_aggregate_func<BoolSumState, &boolean_sum_result>(
               "boolean_sum")
               .returns(INT)

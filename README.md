@@ -59,6 +59,19 @@ SHOW CREATE TABLE settings;
 
 ## Function Reference
 
+### Scalar functions
+
+| Function | Returns | Description |
+|---|---|---|
+| `boolean_to_int(col)` | `INT` | `1` for `TRUE`, `0` for `FALSE`, `NULL` for `NULL`. Deterministic, so it may be used in generated columns and `CHECK` constraints. |
+
+```sql
+SELECT id FROM settings WHERE boolean_to_int(enabled) = 1;
+SELECT SUM(boolean_to_int(enabled)) FROM settings;
+
+ALTER TABLE settings ADD COLUMN enabled_int INT AS (boolean_to_int(enabled)) STORED;
+```
+
 ### Aggregate functions
 
 | Function | Returns | Description |
@@ -109,8 +122,10 @@ format. Track this at https://github.com/villagesql/villagesql-server/issues/604
 **Built-in `SUM()` and `AVG()` are not supported on `STRICTBOOL` columns.**
 These aggregates require numeric promotion that the current VEF API does not
 expose for custom types. Use `boolean_sum()` and `boolean_avg()` instead (see
-above). `COUNT(*)`, `MIN()`, and `MAX()` work correctly. Track native aggregate
-support at https://github.com/villagesql/villagesql-server/issues/605.
+above), or wrap the column in `boolean_to_int()` — `SUM(boolean_to_int(col))`
+and `AVG(boolean_to_int(col))` work with the built-ins. `COUNT(*)`, `MIN()`,
+and `MAX()` work correctly. Track native aggregate support at
+https://github.com/villagesql/villagesql-server/issues/605.
 
 **Extension-defined index types are not supported in the stable VEF API.**
 Custom STRICTBOOL columns participate in standard MySQL B-tree indexes via the

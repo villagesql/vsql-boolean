@@ -1,0 +1,51 @@
+INSTALL EXTENSION vsql_boolean;
+
+--echo #
+--echo # boolean_to_int: TRUE -> 1, FALSE -> 0, NULL -> NULL
+--echo #
+
+CREATE TABLE t_bool (id INT, flag STRICTBOOL);
+INSERT INTO t_bool VALUES (1, 'true'), (2, 'false'), (3, 'yes'), (4, 'off'), (5, NULL);
+SELECT id, flag, boolean_to_int(flag) AS as_int FROM t_bool ORDER BY id;
+
+--echo #
+--echo # Built-in numeric aggregates over the converted column
+--echo #
+
+SELECT SUM(boolean_to_int(flag)) AS true_count,
+       AVG(boolean_to_int(flag)) AS true_ratio
+FROM t_bool;
+
+--echo #
+--echo # Same answers as the extension's own aggregates
+--echo #
+
+SELECT boolean_sum(flag) AS true_count, boolean_avg(flag) AS true_ratio
+FROM t_bool;
+
+--echo #
+--echo # Filtering on the numeric form
+--echo #
+
+SELECT id FROM t_bool WHERE boolean_to_int(flag) = 1 ORDER BY id;
+SELECT id FROM t_bool WHERE boolean_to_int(flag) = 0 ORDER BY id;
+DROP TABLE t_bool;
+
+--echo #
+--echo # Deterministic: usable in a STORED generated column
+--echo #
+
+CREATE TABLE t_gen (
+  id INT,
+  flag STRICTBOOL,
+  flag_int INT AS (boolean_to_int(flag)) STORED
+);
+INSERT INTO t_gen (id, flag) VALUES (1, 'true'), (2, 'false'), (3, NULL);
+SELECT id, flag, flag_int FROM t_gen ORDER BY id;
+DROP TABLE t_gen;
+
+--echo #
+--echo # Cleanup
+--echo #
+
+UNINSTALL EXTENSION vsql_boolean;
