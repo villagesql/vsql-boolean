@@ -4,6 +4,9 @@ A real `BOOLEAN` type for VillageSQL. Replaces `BOOL`/`BOOLEAN` aliases for
 `TINYINT(1)` with a proper boolean type — clear metadata, standard truth
 values, and correct dump/restore semantics.
 
+**Docs:** [VillageSQL documentation](https://villagesql.com/docs) ·
+[Install VillageSQL Server](https://villagesql.com/install)
+
 ## Installation
 
 If you installed VillageSQL with the install script, the Docker image, or a
