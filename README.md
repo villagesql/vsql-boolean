@@ -164,3 +164,5 @@ Open an issue at https://github.com/villagesql/villagesql-server/issues
 ## License
 
 GPL-2.0. See source files for the full license header.
+
+<!-- fork delivery test, 2026-09-25 -->
