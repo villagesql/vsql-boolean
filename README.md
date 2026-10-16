@@ -23,18 +23,9 @@ extensions, or if you are working on this extension itself.
 
 ## Building
 
-**Linux:**
 ```bash
 mkdir -p build
 cmake -S . -B build -DVillageSQL_BUILD_DIR=$HOME/build/villagesql
-cmake --build build
-cmake --install build
-```
-
-**macOS:**
-```bash
-mkdir -p build
-cmake -S . -B build -DVillageSQL_BUILD_DIR="$HOME/.villagesql/build"
 cmake --build build
 cmake --install build
 ```
